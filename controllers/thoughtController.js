@@ -2,9 +2,7 @@ const { User, Thought } = require('../models')
 
 const getSingleThought = async (req, res) => {
   try {
-    const thought = await Thought.findOne({ _id: req.params.thoughtId }).select(
-      '-__v'
-    )
+    const thought = await Thought.findById(req.params.thoughtId).select('-__v')
     if (!thought) {
       return res.status(404).json({ message: 'No thought with this id!' })
     }
@@ -36,10 +34,13 @@ const createThought = async (req, res) => {
 
 const updateThought = async (req, res) => {
   try {
-    const thought = await Thought.findOneAndUpdate(
-      { thoughts: req.params.thoughtId },
-      { $pull: { thoughts: req.params.thoughtId } },
-      { new: true }
+    const thought = await Thought.findByIdAndUpdate(
+      req.params.thoughtId,
+      req.body,
+      {
+        new: true,
+        runValidators: true,
+      }
     )
     if (!thought) {
       return res.status(404).json({ message: 'No thought with this id!' })
@@ -53,13 +54,12 @@ const updateThought = async (req, res) => {
 
 const deleteThought = async (req, res) => {
   try {
-    const thought = await Thought.findOneAndDelete({
-      _id: req.params.thoughtId,
-    })
+    const thought = await Thought.findByIdAndDelete(req.params.thoughtId)
     if (!thought) {
       return res.status(404).json({ message: 'No thought with this id!' })
     }
     await User.deleteMany({ username: thought.username })
+    res.json({ message: 'Thought deleted!' })
   } catch (error) {
     console.log(error)
     res.status(500).json(error)

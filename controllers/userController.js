@@ -2,7 +2,7 @@ const { User, Thought } = require('../models')
 
 const getSingleUser = async (req, res) => {
   try {
-    const user = await User.findOne({ _id: req.params.userId }).select('-__v')
+    const user = await User.findById(req.params.userId).select('-__v')
     if (!user) {
       return res.status(404).json({ message: 'No user with this id!' })
     }
@@ -35,11 +35,10 @@ const createUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    const user = await User.findOneAndUpdate(
-      { users: req.params.username },
-      { $pull: { users: req.params.username } },
-      { new: true }
-    )
+    const user = await User.findByIdAndUpdate(req.params.userId, req.body, {
+      new: true,
+      runValidators: true,
+    })
     if (!user) {
       return res.status(404).json({ message: 'No user with this id!' })
     }
@@ -52,11 +51,12 @@ const updateUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   try {
-    const user = await User.findOneAndDelete({ _id: req.params.userId })
+    const user = await User.findByIdAndDelete(req.params.userId)
     if (!user) {
       return res.status(404).json({ message: 'No user with this id!' })
     }
     await Thought.deleteMany({ username: user.username })
+    res.json({ message: 'User deleted!' })
   } catch (error) {
     console.log(error)
     res.status(500).json(error)
@@ -65,8 +65,8 @@ const deleteUser = async (req, res) => {
 
 const addFriend = async (req, res) => {
   try {
-    const user = await User.findOneAndUpdate(
-      { _id: req.params.userId },
+    const user = await User.findByIdAndUpdate(
+      req.params.userId,
       { $addToSet: { friends: req.params.friendId } },
       { new: true }
     )
